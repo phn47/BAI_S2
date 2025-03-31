@@ -1,10 +1,38 @@
 var express = require('express');
 var router = express.Router();
 let productSchema = require('../schemas/product')
-
+let categorySchema = require('../schemas/category')
+let { check_authentication, check_authorization } = require("../utils/check_auth")
 /* GET users listing. */
+function BuildQuery(query) {
+  let result = {};
+  if (query.name) {
+    result.name = new RegExp(query.name, 'i');
+  }
+  result.price = {};
+  if (query.price) {
+    if (query.price.$gte) {
+      result.price.$gte = Number(query.price.$gte);
+    } else {
+      result.price.$gte = 0;
+    }
+    if (query.price.$lte) {
+      result.price.$lte = Number(query.price.$lte);
+    } else {
+      result.price.$lte = 10000;
+    }
+  } else {
+    result.price.$gte = 0;
+    result.price.$lte = 10000;
+  }
+  return result;
+}
 router.get('/', async function (req, res, next) {
-  let products = await productSchema.find({})
+  console.log(BuildQuery(req.query));
+
+  let products = await productSchema.find(BuildQuery(req.query)).populate({
+    path: 'category', select: 'name'
+  })
   res.status(200).send({
     success: true,
     data: products
@@ -25,20 +53,31 @@ router.get('/:id', async function (req, res, next) {
     });
   }
 });
-router.post('/', async function (req, res, next) {
+router.post('/', check_authentication, check_authorization(['admin', 'mod']), async function (req, res, next) {
   try {
     let body = req.body;
-    let newProduct = new productSchema({
-      name: body.name,
-      price: body.price ? body.price : 0,
-      quantity: body.quantity ? body.quantity : 0,
-      category: body.category,
-    });
-    await newProduct.save()
-    res.status(200).send({
-      success: true,
-      data: newProduct
-    });
+    let category = body.category;
+    let getCategory = await categorySchema.findOne({
+      name: category
+    })
+    if (getCategory) {
+      let newProduct = new productSchema({
+        name: body.name,
+        price: body.price ? body.price : 0,
+        quantity: body.quantity ? body.quantity : 0,
+        category: getCategory._id,
+      });
+      await newProduct.save()
+      res.status(200).send({
+        success: true,
+        data: newProduct
+      });
+    } else {
+      res.status(404).send({
+        success: false,
+        message: "category sai"
+      });
+    }
   } catch (error) {
     res.status(404).send({
       success: false,
@@ -46,7 +85,7 @@ router.post('/', async function (req, res, next) {
     });
   }
 });
-router.put('/:id', async function (req, res, next) {
+router.put('/:id', check_authentication, check_authorization(['admin', 'mod']), async function (req, res, next) {
   try {
     let id = req.params.id;
     let product = await productSchema.findById(id);
@@ -72,7 +111,7 @@ router.put('/:id', async function (req, res, next) {
     } else {
       res.status(404).send({
         success: false,
-        message: "ID khong ton tai"
+        message: "ID khomng ton tai"
       });
     }
   } catch (error) {
@@ -82,7 +121,7 @@ router.put('/:id', async function (req, res, next) {
     });
   }
 });
-router.delete('/:id', async function (req, res, next) {
+router.delete('/:id', check_authentication, check_authorization(['admin']), async function (req, res, next) {
   try {
     let id = req.params.id;
     let product = await productSchema.findById(id);
@@ -96,7 +135,7 @@ router.delete('/:id', async function (req, res, next) {
     } else {
       res.status(404).send({
         success: false,
-        message: "ID khong ton tai"
+        message: "ID khomng ton tai"
       });
     }
   } catch (error) {

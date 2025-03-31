@@ -1,16 +1,18 @@
-let mongoose = require('mongoose');
+let mongoose = require('mongoose')
 let categorySchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    description: {
-        type: String,
-        default: ""
+    name:{
+        type:String,
+        required:true,
+        unique:true
+    },description:{
+        type:String,
+        default:"",
     }
-}, {
-    timestamps: true
-});
-
-module.exports = mongoose.model('Category', categorySchema);
+    ,isDeleted:{
+        type:Boolean,
+        default:false,
+    }
+},{
+    timestamps:true
+})
+module.exports = mongoose.model('category',categorySchema)

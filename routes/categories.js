@@ -1,65 +1,99 @@
-let express = require('express');
-let router = express.Router();
-let Category = require('../schemas/category'); // Import schema
+var express = require('express');
+var router = express.Router();
+let categorySchema = require('../schemas/category')
+let { check_authentication, check_authorization } = require("../utils/check_auth")
 
-// Create a new category
-router.post('/', async (req, res) => {
-    try {
-        let category = new Category(req.body);
-        await category.save();
-        res.status(201).json(category);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
+/* GET users listing. */
+router.get('/', async function (req, res, next) {
+  let categories = await categorySchema.find({})
+  res.status(200).send({
+    success: true,
+    data: categories
+  });
 });
-
-// Get all categories
-router.get('/', async (req, res) => {
-    try {
-        let categories = await Category.find();
-        res.status(200).json(categories);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+router.get('/:id', async function (req, res, next) {
+  try {
+    let id = req.params.id;
+    let category = await categorySchema.findById(id)
+    res.status(200).send({
+      success: true,
+      data: category
+    });
+  } catch (error) {
+    res.status(404).send({
+      success: false,
+      message: error.message
+    });
+  }
 });
-
-// Get a single category by ID
-router.get('/:id', async (req, res) => {
-    try {
-        let category = await Category.findById(req.params.id);
-        if (!category) {
-            return res.status(404).json({ error: 'Category not found' });
-        }
-        res.status(200).json(category);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+router.post('/', check_authentication, check_authorization(['admin', 'mod']), async function (req, res, next) {
+  try {
+    let body = req.body;
+    let newCategory = new categorySchema({
+      name: body.name
+    });
+    await newCategory.save()
+    res.status(200).send({
+      success: true,
+      data: newCategory
+    });
+  } catch (error) {
+    res.status(404).send({
+      success: false,
+      message: error.message
+    });
+  }
 });
-
-// Update a category by ID
-router.put('/:id', async (req, res) => {
-    try {
-        let category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-        if (!category) {
-            return res.status(404).json({ error: 'Category not found' });
-        }
-        res.status(200).json(category);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
+router.put('/:id', check_authentication, check_authorization(['admin', 'mod']), async function (req, res, next) {
+  try {
+    let id = req.params.id;
+    let category = await categorySchema.findById(id);
+    if (category) {
+      let body = req.body;
+      if (body.name) {
+        category.name = body.name;
+      }
+      await category.save()
+      res.status(200).send({
+        success: true,
+        data: category
+      });
+    } else {
+      res.status(404).send({
+        success: false,
+        message: "ID khomng ton tai"
+      });
     }
+  } catch (error) {
+    res.status(404).send({
+      success: false,
+      message: error.message
+    });
+  }
 });
-
-// Delete a category by ID
-router.delete('/:id', async (req, res) => {
-    try {
-        let category = await Category.findByIdAndDelete(req.params.id);
-        if (!category) {
-            return res.status(404).json({ error: 'Category not found' });
-        }
-        res.status(200).json({ message: 'Category deleted successfully' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+router.delete('/:id', check_authentication, check_authorization(['admin']), async function (req, res, next) {
+  try {
+    let id = req.params.id;
+    let category = await categorySchema.findById(id);
+    if (category) {
+      category.isDeleted = true
+      await category.save()
+      res.status(200).send({
+        success: true,
+        data: category
+      });
+    } else {
+      res.status(404).send({
+        success: false,
+        message: "ID khomng ton tai"
+      });
     }
+  } catch (error) {
+    res.status(404).send({
+      success: false,
+      message: error.message
+    });
+  }
 });
 
 module.exports = router;
