@@ -111,7 +111,7 @@ router.put('/:id', check_authentication, check_authorization(['admin', 'mod']), 
     } else {
       res.status(404).send({
         success: false,
-        message: "ID khomng ton tai"
+        message: "ID khong ton tai"
       });
     }
   } catch (error) {
@@ -135,7 +135,7 @@ router.delete('/:id', check_authentication, check_authorization(['admin']), asyn
     } else {
       res.status(404).send({
         success: false,
-        message: "ID khomng ton tai"
+        message: "ID khong ton tai"
       });
     }
   } catch (error) {

@@ -1,33 +1,43 @@
 let mongoose = require('mongoose')
 let productSchema = new mongoose.Schema({
-    name:{
-        type:String,
-        required:true,
-        unique:[true,"truong nay la unique"]
-    },price:{
-        type:Number,
-        default:0,
-        min:0
-    },quantity:{
-        type:Number,
-        default:0,
-        min:0
-    },description:{
-        type:String,
-        default:"",
-    },imgURL:{
-        type:String,
-        default:"",
-    },category:{
-        type:mongoose.Types.ObjectId,
-        ref:'category',
-        required:true
+    name: {
+        type: String,
+        required: true,
+        unique: [true, "truong nay la unique"]
     },
-    isDeleted:{
-        type:Boolean,
-        default:false
+    slug: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    price: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    quantity: {
+        type: Number,
+        default: 0,
+        min: 0
+    },
+    description: {
+        type: String,
+        default: "",
+    },
+    imgURL: {
+        type: String,
+        default: "",
+    },
+    category: {
+        type: mongoose.Types.ObjectId,
+        ref: 'category',
+        required: true
+    },
+    isDeleted: {
+        type: Boolean,
+        default: false
     }
-},{
-    timestamps:true
+}, {
+    timestamps: true
 })
-module.exports = mongoose.model('product',productSchema)
+module.exports = mongoose.model('product', productSchema)
